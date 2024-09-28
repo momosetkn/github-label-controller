@@ -4,7 +4,8 @@
   "version": "0.0.0",
   "type": "commonjs",
   "scripts": {
-    "build": "tsc"
+    "build": "pnpm esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=dist/index.js --sourcemap",
+    "deploy": "tools/deploy.sh"
   },
   "devDependencies": {
     "esbuild": "^0.24.0",

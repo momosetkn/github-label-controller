@@ -4,4 +4,8 @@ declare namespace NodeJS {
         GITHUB_APP_ID: string;
         GITHUB_TOKEN: string;
     }
+    interface LabelControllerItem {
+        label: string;
+        workflowId: string;
+    }
 }
