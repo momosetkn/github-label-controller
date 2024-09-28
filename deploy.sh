@@ -2,9 +2,14 @@
 rm -rf artifact && mkdir artifact
 
 #build
-pnpm install
+pnpm install --prd
+pnpm pru --prd
 
 #layer
+#rm -rf artifact/nodejs && mkdir -p artifact/nodejs
+#cp -r node_modules artifact/nodejs
+#zip -r artifact/layer.zip artifact/nodejs
+
 zip -r artifact/layer.zip node_modules
 
 aws --profile private \
