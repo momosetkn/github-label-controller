@@ -5,8 +5,8 @@ import type {ProbotOctokit} from "probot/lib/octokit/probot-octokit";
 import ProcessEnv = NodeJS.ProcessEnv;
 import LabelControllerItem = NodeJS.LabelControllerItem;
 
-async function extracted(
-    {context, label, octokit, owner, pullRequestNumber, ref, repo, workflow_id}: {
+async function executeWorkflowsWhenAddLabel(
+    {context, label, octokit, owner, pullRequestNumber, ref, repo, workflow_id, labelControllerConfig}: {
         octokit: ProbotOctokit,
         owner: string,
         repo: string,
@@ -14,7 +14,8 @@ async function extracted(
         pullRequestNumber: number,
         context: Context<"pull_request.labeled">,
         workflow_id: string,
-        ref: string
+        ref: string,
+        labelControllerConfig: LabelControllerItem,
     }
 ) {
     // ラベルが付与されているプルリクエストの一覧を取得
@@ -31,7 +32,7 @@ async function extracted(
         pr.labels.some(l => l.name === label) && pr.number !== pullRequestNumber
     );
     context.log.info("labeledPRs: " + labeledPRs.map(x => x.number));
-    labeledPRs.forEach(labeledPR => {
+    for (const labeledPR of labeledPRs) {
         // プルリクエストからラベルを削除
         octokit.issues.removeLabel({
             owner,
@@ -41,7 +42,8 @@ async function extracted(
         });
         // rollback処理
         console.log("rollback" + labeledPR.number)
-    })
+        await octokit.actions.createWorkflowDispatch({owner, repo, workflow_id: labelControllerConfig.ifRemoveWorkflowId, ref});
+    }
 
     const inputs = {
         name: "Alice",
@@ -55,6 +57,17 @@ async function extracted(
     }
 }
 
+async function getLabelControllerConfig(octokit: ProbotOctokit, owner: string, repo: string, label: string) {
+    const labelControllerJson = await getFile({
+        octokit,
+        owner, repo,
+        path: ".github/label-controller.json"
+    })
+    const labelController = JSON.parse(labelControllerJson!) as LabelControllerItem[]
+    const item = labelController.find(x => x.label === label)
+    return item;
+}
+
 const handlePullRequestLabeled = async (context: Context<"pull_request.labeled">) => {
     const label = context.payload.label.name;
     const pullRequestNumber = context.payload.pull_request.number;
@@ -62,21 +75,16 @@ const handlePullRequestLabeled = async (context: Context<"pull_request.labeled">
 
     const owner = context.payload.repository.owner.login;
     const repo = context.payload.repository.name;
-    const workflow_id = "test1.yml";
     // const ref = "main"
     const ref = context.payload.pull_request.head.ref
 
     const octokit = context.octokit;
-
-    const labelControllerJson = await getFile({
-        octokit,
-        owner, repo,
-        path: ".github/label-controller.json"
-    })
-    const labelController = JSON.parse(labelControllerJson!!) as LabelControllerItem[]
-    for (const item of labelController) {
-        if (item.label === "trigger-workflow") {
-            await extracted({octokit, owner, repo, label, pullRequestNumber, context, workflow_id, ref});
+    const item = await getLabelControllerConfig(octokit, owner, repo, label);
+    if (item!!) {
+        context.log.info(`Match the Label ${label}`);
+        const workflow_id = item.ifAddWorkflowId;
+        if (item.label === label) {
+            await executeWorkflowsWhenAddLabel({octokit, owner, repo, label, pullRequestNumber, context, workflow_id, ref, labelControllerConfig: item});
         } else {
             context.log.info(`else--------------------Label ${label} was added to pull request #${pullRequestNumber}`);
         }
@@ -89,9 +97,32 @@ const handlePullRequestUnlabeled = async (context: Context<"pull_request.unlabel
     const pullRequestNumber = context.payload.pull_request.number;
     context.log.info(`Label ${label} was removed from pull request #${pullRequestNumber}`);
 
+    const owner = context.payload.repository.owner.login;
+    const repo = context.payload.repository.name;
+    const ref = context.payload.pull_request.head.ref
+    const octokit = context.octokit;
+
     // rollback
 
+    ifRemoveLabel(
+        {
+            label, octokit, owner, ref, repo
+        }
+    )
+
 };
+const ifRemoveLabel = async (    { label, octokit, owner, ref, repo}: {
+                                     octokit: ProbotOctokit,
+                                     owner: string,
+                                     repo: string,
+                                     label: string,
+                                     ref: string
+                                 } ) => {
+    const item = await getLabelControllerConfig(octokit, owner, repo, label);
+    if(!item) return
+
+    await octokit.actions.createWorkflowDispatch({owner, repo, workflow_id: item.ifRemoveWorkflowId, ref});
+}
 
 const getFile = async ({
                            octokit, path, owner, repo
