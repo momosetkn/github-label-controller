@@ -1,5 +1,7 @@
 import {Context} from "probot";
 import {Octokit} from "@octokit/rest";
+import {createAppAuth} from "@octokit/auth-app";
+import ProcessEnv = NodeJS.ProcessEnv;
 
 const handlePullRequestLabeled = async (context: Context<"pull_request.labeled">) => {
     const label = context.payload.label.name;
@@ -9,9 +11,9 @@ const handlePullRequestLabeled = async (context: Context<"pull_request.labeled">
     if (label === "trigger-workflow") {
         const owner = context.payload.repository.owner.login;
         const repo = context.payload.repository.name;
-        const workflow_id = "dispatch-workflow.yml";
-        const ref = "main"
-        // const ref = context.payload.pull_request.head.ref
+        const workflow_id = "test1.yml";
+        // const ref = "main"
+        const ref = context.payload.pull_request.head.ref
 
         const octokit = context.octokit;
         const inputs = {
@@ -19,7 +21,7 @@ const handlePullRequestLabeled = async (context: Context<"pull_request.labeled">
             runTests: "yes"
         }
         try {
-            await octokit.actions.createWorkflowDispatch({owner, repo, workflow_id, ref, inputs});
+            await octokit.actions.createWorkflowDispatch({owner, repo, workflow_id, ref});
             context.log.info(`Workflow ${workflow_id} triggered successfully!`);
         } catch (error) {
             context.log.error(`Failed to trigger workflow: ${error}`);
@@ -36,12 +38,29 @@ const handlePullRequestUnlabeled = async (context: Context<"pull_request.unlabel
 
 };
 
-exports.handler = async (event: any) => {
+export const handler = async (event: any) => {
+    const processEnv = process.env as ProcessEnv
+    const privateKey = processEnv.GITHUB_APP_PRIVATE_KEY.replace(/\\n/g, '\n');
+    const appId = processEnv.GITHUB_APP_ID;
+    const githubToken = processEnv.GITHUB_TOKEN;
+
+    console.log("event.body: " + event.body)
     const githubEvent = JSON.parse(event.body);
+    const installationId =     githubEvent.installation.id
+
+    const auth = createAppAuth({
+        appId,
+        privateKey,
+        installationId
+    });
+
+    const appAuthentication = await auth({ type: "installation" });
+
     const context = {
         payload: githubEvent,
         log: console,
-        octokit: new Octokit({auth: process.env.GITHUB_TOKEN})
+        octokit: new Octokit({auth: appAuthentication.token})
+        // octokit: new Octokit({auth: githubToken}) // これで動いたは動いた
     };
 
     if (githubEvent.action === "labeled") {
