@@ -1,12 +1,13 @@
 import globals from "globals";
-import pluginJs from "@eslint/js";
 import tseslint from "typescript-eslint";
 
-
 export default [
-  {files: ["**/*.{js,mjs,cjs,ts}"]},
-  {files: ["**/*.js"], languageOptions: {sourceType: "commonjs"}},
-  {languageOptions: { globals: globals.browser }},
-  pluginJs.configs.recommended,
-  ...tseslint.configs.recommended,
+  // srcディレクトリ配下のTypeScriptファイルのみをチェック対象にする
+  { files: ["src/**/*.ts"], languageOptions: { sourceType: "module" } },
+  {
+    ignores: ["dist/*.*"]
+  },
+  // AWS Lambda環境 (Node.js) のグローバル設定を適用
+  { languageOptions: { globals: globals.node } },
+  ...tseslint.configs.recommended  // TypeScriptの推奨設定を適用
 ];
