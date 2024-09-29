@@ -85,7 +85,17 @@ const handlePullRequestLabeled = async (context: Context<"pull_request.labeled">
         context.log.info(`Match the Label ${label}`);
         const workflow_id = item.ifAddWorkflowId;
         if (item.label === label) {
-            await executeWorkflowsWhenAddLabel({octokit, owner, repo, label, pullRequestNumber, context, workflow_id, ref, labelControllerConfig: item});
+            await executeWorkflowsWhenAddLabel({
+                octokit,
+                owner,
+                repo,
+                label,
+                pullRequestNumber,
+                context,
+                workflow_id,
+                ref,
+                labelControllerConfig: item
+            });
         } else {
             context.log.info(`else--------------------Label ${label} was added to pull request #${pullRequestNumber}`);
         }
@@ -97,6 +107,9 @@ const handlePullRequestUnlabeled = async (context: Context<"pull_request.unlabel
     const label = context.payload.label.name;
     const pullRequestNumber = context.payload.pull_request.number;
     context.log.info(`Label ${label} was removed from pull request #${pullRequestNumber}`);
+    if (context.payload.pull_request.state !== "open") {
+        return
+    }
 
     const owner = context.payload.repository.owner.login;
     const repo = context.payload.repository.name;
@@ -112,17 +125,17 @@ const handlePullRequestUnlabeled = async (context: Context<"pull_request.unlabel
     )
 
 };
-const ifRemoveLabel = async (    { label, octokit, owner, ref, repo}: {
-                                     octokit: ProbotOctokit,
-                                     owner: string,
-                                     repo: string,
-                                     label: string,
-                                     ref: string
-                                 } ) => {
+const ifRemoveLabel = async ({label, octokit, owner, ref, repo}: {
+    octokit: ProbotOctokit,
+    owner: string,
+    repo: string,
+    label: string,
+    ref: string
+}) => {
     const item = await getLabelControllerConfig(octokit, owner, repo, label);
-    if(!item) return
+    if (!item) return
 
-    console.log("execute ifRemoveLabel:" + label + "ref"  + ref);
+    console.log("execute ifRemoveLabel:" + label + "ref" + ref);
     await octokit.actions.createWorkflowDispatch({owner, repo, workflow_id: item.ifRemoveWorkflowId, ref});
 }
 
