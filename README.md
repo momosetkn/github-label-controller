@@ -24,9 +24,9 @@ AWS Lambda, S3, API Gatewayを使います
 環境変数
 
 - GITHUB_APP_ID: Github側のApp ID（https://github.com/settings/apps で確認）
-- GITHUB_APP_PRIVATE_KEY: Private keysを改行を\nへ置き換えたもの
+- GITHUB_APP_PRIVATE_KEY: Private keysを改行を\nへ置き換えたもの（https://github.com/settings/apps で取得可能）
 
-5秒以上かかるものもあるので、Lambdaのタイムアウト値をデフォルトの３秒から１５秒ぐらいにしておく
+5秒以上かかるものもあるので、Lambdaのタイムアウト値をデフォルトの３秒から変更し、１５秒ぐらいにしておく
 
 ### github側での設定
 
