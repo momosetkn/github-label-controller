@@ -54,7 +54,6 @@ const handlePullRequestLabeled = async (context: Context<"pull_request.labeled">
 
     const owner = context.payload.repository.owner.login;
     const repo = context.payload.repository.name;
-    // const ref = "main"
     const ref = context.payload.pull_request.head.ref
 
     const octokit = context.octokit;
@@ -76,6 +75,22 @@ const handlePullRequestLabeled = async (context: Context<"pull_request.labeled">
             ref,
             labelControllerConfig: item
         });
+    }
+};
+
+const handlePullRequestSynchronize = async (context: Context<"pull_request.synchronize">) => {
+    const owner = context.payload.repository.owner.login;
+    const repo = context.payload.repository.name;
+    const ref = context.payload.pull_request.head.ref
+    const octokit = context.octokit;
+    const labels = context.payload.pull_request.labels.map(x => x.name);
+
+    const configs = await getLabelControllerConfigs(context)
+    for (const config of configs) {
+        const matchedLabel = labels.find(x => x === config.label)
+        if (!!matchedLabel) {
+            await octokit.actions.createWorkflowDispatch({owner, repo, workflow_id: config.ifAddWorkflowId, ref});
+        }
     }
 };
 
@@ -168,6 +183,8 @@ export const handler = async (event: any) => {
         await handlePullRequestUnlabeled(context as any as Context<"pull_request.unlabeled">);
     } else if (githubEvent.action === "closed") {
         await handlePullRequestClosed(context as any as Context<"pull_request.unlabeled">);
+    } else if (githubEvent.action === "synchronize") {
+        await handlePullRequestSynchronize(context as any as Context<"pull_request.synchronize">);
     } else {
         console.log(`Unhandled action "${githubEvent.action}"`)
     }
