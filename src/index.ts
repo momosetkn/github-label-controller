@@ -34,7 +34,7 @@ async function executeWorkflowsWhenAddLabel(
     context.log.info("labeledPRs: " + labeledPRs.map(x => x.number));
     for (const labeledPR of labeledPRs) {
         // プルリクエストからラベルを削除
-        octokit.issues.removeLabel({
+        await octokit.issues.removeLabel({
             owner,
             repo,
             issue_number: labeledPR.number,  // PR番号はIssue番号として扱う
@@ -42,7 +42,8 @@ async function executeWorkflowsWhenAddLabel(
         });
         // rollback処理
         console.log("rollback" + labeledPR.number)
-        await octokit.actions.createWorkflowDispatch({owner, repo, workflow_id: labelControllerConfig.ifRemoveWorkflowId, ref});
+        // ラベルを剥がすことで自分自身を間接的に呼ぶ
+        // await octokit.actions.createWorkflowDispatch({owner, repo, workflow_id: labelControllerConfig.ifRemoveWorkflowId, ref});
     }
 
     const inputs = {
@@ -104,7 +105,7 @@ const handlePullRequestUnlabeled = async (context: Context<"pull_request.unlabel
 
     // rollback
 
-    ifRemoveLabel(
+    await ifRemoveLabel(
         {
             label, octokit, owner, ref, repo
         }
@@ -121,6 +122,7 @@ const ifRemoveLabel = async (    { label, octokit, owner, ref, repo}: {
     const item = await getLabelControllerConfig(octokit, owner, repo, label);
     if(!item) return
 
+    console.log("execute ifRemoveLabel:" + label + "ref"  + ref);
     await octokit.actions.createWorkflowDispatch({owner, repo, workflow_id: item.ifRemoveWorkflowId, ref});
 }
 
