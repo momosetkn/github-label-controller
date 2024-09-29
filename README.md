@@ -2,7 +2,7 @@
 
 ラベル付与、剥がしで、ワークフローを実行するものです。
 リポジトリに以下のようなファイルが必要となります。
-https://github.com/momosetkn/label-controller-test/blob/fc9df5d58b46956576549836fd34ce69bc7affa3/.github/label-controller.json#L11
+https://github.com/momosetkn/label-controller-test/blob/fc9df5d58b46956576549836fd34ce69bc7affa3/.github/label-controller.json
 
 デプロイ、アンデプロイに使えます。
 
@@ -56,4 +56,4 @@ pnpm Build
 pnpm release
 
 以下は各自のAWSのクライアントの設定に合わせて書き換えてください
-https://github.com/momosetkn/github-label-controller/blob/main/tools/release.sh#L3
+https://github.com/momosetkn/github-label-controller/blob/main/tools/release.sh
