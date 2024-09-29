@@ -39,3 +39,6 @@ pnpm Build
 ## Release
 
 pnpm release
+
+以下は各自のAWSのクライアントの設定に合わせて書き換えてください
+https://github.com/momosetkn/github-label-controller/blob/main/tools/release.sh#L3
