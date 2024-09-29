@@ -1,8 +1,21 @@
 # github-label-controller
 
+ラベル付与、剥がしで、ワークフローを実行するものです。
+リポジトリに以下のようなファイルが必要となります。
+https://github.com/momosetkn/label-controller-test/blob/fc9df5d58b46956576549836fd34ce69bc7affa3/.github/label-controller.json#L11
+
+デプロイ、アンデプロイに使えます。
+
+挙動
+
+| アクション                   | 動作                                       |
+|-------------------------|------------------------------------------|
+| ラベルを付与                  | 同じラベルが付与された他のPRからラベルを剥がして、指定されたワークフローを実行 |
+| ラベルを剥がす                 | ラベルを剥がしたときに実行されるワークフローを実行する              |
+| クローズ（マージ含む）             | ラベルを剥がす                                  |
+| ラベルが付与されたPRへ新規コミットをプッシュ | 指定されたワークフローを実行                           |
 
 ## appの作り方
-
 
 ### AWS
 
@@ -16,6 +29,7 @@ AWS Lambda, S3, API Gatewayを使います
 5秒以上かかるものもあるので、Lambdaのタイムアウト値をデフォルトの３秒から１５秒ぐらいにしておく
 
 ### github側での設定
+
 https://github.com/settings/apps/new
 
 Webhook: Active
@@ -30,6 +44,7 @@ Callback URL, Setup URL (optional), Webhook URL
 - Pull requests: Read and write
 
 必要なSubscribe to events
+
 - Pull request
 
 ## Build
