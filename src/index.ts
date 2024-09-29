@@ -150,7 +150,6 @@ const getLabelControllerConfigs = async (context: Context<any>) => {
         const fileContentBase64 = response.data.content;
         const fileContent = atob(fileContentBase64);  // Base64をデコード
 
-        console.debug("ファイルの内容:", fileContent);
         return JSON.parse(fileContent) as LabelControllerItem[]
     } else {
         throw Error("ファイルが見つかりませんでした。")
