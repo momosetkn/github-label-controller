@@ -97,7 +97,8 @@ const handlePullRequestUnlabeled = async (context: Context<"pull_request.unlabel
     const label = context.payload.label.name;
     const pullRequestNumber = context.payload.pull_request.number;
     context.log.info(`Label ${label} was removed from pull request #${pullRequestNumber}`);
-    if (context.payload.pull_request.state !== "open") {
+    // マージによるクローズであれば、処理対象外
+    if (context.payload.pull_request.state === "closed" && !!context.payload.pull_request.merged_at) {
         return
     }
 
