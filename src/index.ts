@@ -121,16 +121,20 @@ const handlePullRequestClosed = async (context: Context<"pull_request.closed">) 
     const owner = context.payload.repository.owner.login;
     const repo = context.payload.repository.name;
     const octokit = context.octokit;
+    const labels = context.payload.pull_request.labels.map(x => x.name);
 
     const configs = await getLabelControllerConfigs(context)
     for (const config of configs) {
-        // プルリクエストからラベルを削除
-        await octokit.issues.removeLabel({
-            owner,
-            repo,
-            issue_number: pullRequestNumber,  // PR番号はIssue番号として扱う
-            name: config.label,         // 剥がすラベル名
-        });
+        const matchedLabel = labels.find(x => x === config.label)
+        if (!!matchedLabel) {
+            // プルリクエストからラベルを削除
+            await octokit.issues.removeLabel({
+                owner,
+                repo,
+                issue_number: pullRequestNumber,  // PR番号はIssue番号として扱う
+                name: config.label,         // 剥がすラベル名
+            });
+        }
     }
 };
 
