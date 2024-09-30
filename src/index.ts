@@ -6,7 +6,7 @@ import ProcessEnv = NodeJS.ProcessEnv;
 import LabelControllerItem = NodeJS.LabelControllerItem;
 
 async function executeWorkflowsWhenAddLabel(
-    {context, label, octokit, owner, pullRequestNumber, ref, repo, workflow_id, labelControllerConfig}: {
+    {context, label, octokit, owner, pullRequestNumber, ref, repo, workflow_id}: {
         octokit: ProbotOctokit,
         owner: string,
         repo: string,
@@ -15,7 +15,6 @@ async function executeWorkflowsWhenAddLabel(
         context: Context<"pull_request.labeled">,
         workflow_id: string,
         ref: string,
-        labelControllerConfig: LabelControllerItem,
     }
 ) {
     // ラベルが付与されているプルリクエストの一覧を取得
@@ -73,7 +72,6 @@ const handlePullRequestLabeled = async (context: Context<"pull_request.labeled">
             context,
             workflow_id,
             ref,
-            labelControllerConfig: item
         });
     }
 };
@@ -135,6 +133,7 @@ const handlePullRequestClosed = async (context: Context<"pull_request.closed">) 
     }
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getLabelControllerConfigs = async (context: Context<any>) => {
     const owner = context.payload.repository.owner.login;
     const repo = context.payload.repository.name;
@@ -156,6 +155,7 @@ const getLabelControllerConfigs = async (context: Context<any>) => {
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const handler = async (event: any) => {
     const processEnv = process.env as ProcessEnv
     const privateKey = processEnv.GITHUB_APP_PRIVATE_KEY.replace(/\\n/g, '\n');
@@ -177,13 +177,13 @@ export const handler = async (event: any) => {
     };
 
     if (githubEvent.action === "labeled") {
-        await handlePullRequestLabeled(context as any as Context<"pull_request.labeled">);
+        await handlePullRequestLabeled(context as never as Context<"pull_request.labeled">);
     } else if (githubEvent.action === "unlabeled") {
-        await handlePullRequestUnlabeled(context as any as Context<"pull_request.unlabeled">);
+        await handlePullRequestUnlabeled(context as never as Context<"pull_request.unlabeled">);
     } else if (githubEvent.action === "closed") {
-        await handlePullRequestClosed(context as any as Context<"pull_request.unlabeled">);
+        await handlePullRequestClosed(context as never as Context<"pull_request.unlabeled">);
     } else if (githubEvent.action === "synchronize") {
-        await handlePullRequestSynchronize(context as any as Context<"pull_request.synchronize">);
+        await handlePullRequestSynchronize(context as never as Context<"pull_request.synchronize">);
     } else {
         console.log(`Unhandled action "${githubEvent.action}"`)
     }
